@@ -4,7 +4,7 @@ module Spree
   require 'json'
   require 'khipu'
   class KhipuController < StoreController
-    ssl_allowed
+
     protect_from_forgery except: [:notify]
 
     def pay
@@ -28,7 +28,7 @@ module Spree
     end
 
     def success
-      @payment = Spree::Payment.where(identifier: params[:payment]).last
+      @payment = Spree::Payment.where(id: params[:payment]).last
       @khipu_receipt = Spree::KhipuPaymentReceipt.create(payment: @payment)
 
       @payment.order.next!
@@ -41,7 +41,7 @@ module Spree
     end
 
     def cancel
-      @payment = Spree::Payment.where(identifier: params[:payment]).last
+      @payment = Spree::Payment.where(id: params[:payment]).last
       @khipu_receipt = Spree::KhipuPaymentReceipt.create(payment: @payment)
 
       redirect_to checkout_state_path(:payment) and return
@@ -52,11 +52,11 @@ module Spree
         map = provider.get_payment_notification(params)
 
         # Aceptar el pago
-        @payment = Spree::Payment.where(identifier: map["transaction_id"]).last
+        @payment = Spree::Payment.where(id: map["transaction_id"]).last
 
         render  nothing: true, status: :ok and return if @payment.order.payment_state == 'paid'
 
-        @khipu_receipt = Spree::KhipuPaymentReceipt.where(transaction_id: @payment.identifier).last
+        @khipu_receipt = Spree::KhipuPaymentReceipt.where(transaction_id: @payment.id).last
         @khipu_receipt.update(map.select{ |k,v| @khipu_receipt.attributes.keys.include? k })
         @khipu_receipt.save!
 
@@ -82,11 +82,11 @@ module Spree
         payer_email:    payment.order.email,
         bank_id:        "",
         expires_date:   "",
-        transaction_id: payment.identifier,
+        transaction_id: payment.id,
         custom:         "",
         notify_url:     khipu_notify_url,
-        return_url:     khipu_success_url(payment.identifier),
-        cancel_url:     khipu_cancel_url(payment.identifier),
+        return_url:     khipu_success_url(payment.id),
+        cancel_url:     khipu_cancel_url(payment.id),
         picture_url:    "" # Rails.env.production? ? view_context.image_url('Logo Reu blanco.png') : ""
       }
     end
@@ -117,7 +117,7 @@ module Spree
     end
 
     def payment_method
-      params[:payment_method_id] ? (Spree::PaymentMethod.find(params[:payment_method_id]) || Spree::Payment.where(identifier: khipu_params[:transaction_id]).last.payment_method) : Spree::PaymentMethod.where(type: "Spree::Gateway::KhipuGateway").last
+      params[:payment_method_id] ? (Spree::PaymentMethod.find(params[:payment_method_id]) || Spree::Payment.where(id: khipu_params[:transaction_id]).last.payment_method) : Spree::PaymentMethod.where(type: "Spree::Gateway::KhipuGateway").last
     end
 
     def provider
