@@ -16,7 +16,7 @@ class Spree::Gateway::KhipuGateway < Spree::Gateway
   end
 
   def provider
-    Khipu.create_khipu_api(49900, '480d9825496cbda345d3be28d4012a0bee921ed0')
+    Khipu.create_khipu_api(preferred_commerce_id, preferred_khipu_key)
   end
 
   def capture(*args)
