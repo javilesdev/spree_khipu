@@ -16,7 +16,9 @@ module Spree
         :payment_method => payment_method
       )
 
+      render :text => @payment.inspect and return
       begin
+
         map = provider.create_payment_url(payment_args(@payment))
         khipu_payment_url = payment_method.modify_url_by_payment_type(map['url'])
         redirect_to khipu_payment_url
